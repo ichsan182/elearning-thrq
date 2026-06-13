@@ -1,0 +1,244 @@
+<div class="page">
+  <app-navbar [username]="username" />
+
+  <div class="dashboard">
+
+    <!-- ===== LEFT: File List ===== -->
+    <section class="panel-list">
+      <div class="panel-head">
+        <h2 class="panel-title">Daftar File Soal</h2>
+        <div class="date-filter">
+          <button class="filter-tab" [class.active]="isToday" (click)="setFilterToday()">
+            Hari Ini
+          </button>
+          <button class="filter-tab" [class.active]="isYesterday" (click)="setFilterYesterday()">
+            Kemarin
+          </button>
+          <input type="date" class="date-input" [(ngModel)]="filterDate" />
+        </div>
+      </div>
+
+      @if (filteredRecords.length === 0) {
+        <div class="empty-state">
+          <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+            <polyline points="13 2 13 9 20 9" />
+          </svg>
+          <p>Belum ada file untuk tanggal ini</p>
+          <span>Upload file soal menggunakan form di sebelah kanan</span>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table class="file-table">
+            <thead>
+              <tr>
+                <th>Nama File</th>
+                <th>Subject</th>
+                <th>Judul</th>
+                <th>Tanggal Upload</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (record of filteredRecords; track record.id) {
+                <tr [class.row-editing]="editingId === record.id">
+                  <td class="td-file">
+                    <span class="ext-badge ext-{{ getFileExt(record.originalName) }}">
+                      {{ getFileExt(record.originalName).toUpperCase() }}
+                    </span>
+                    <span class="fname" [title]="record.originalName">{{ record.originalName }}</span>
+                  </td>
+                  <td>
+                    <span class="subject-chip">{{ record.subject }}</span>
+                  </td>
+                  <td class="td-title">{{ record.formattedTitle }}</td>
+                  <td class="td-date">{{ formatDate(record.uploadDate) }}</td>
+                  <td class="td-actions">
+                    <button class="act-btn act-edit" (click)="editRecord(record)" title="Edit">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      Edit
+                    </button>
+                    <button class="act-btn act-delete" (click)="deleteRecord(record.id)" title="Hapus">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- ===== RIGHT: Upload Form ===== -->
+    <aside class="panel-form">
+      <div class="form-card">
+        <div class="card-head">
+          @if (editingId) {
+            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            <h2 class="card-title">Edit File Soal</h2>
+          } @else {
+            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 16 12 12 8 16" />
+              <line x1="12" y1="12" x2="12" y2="21" />
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+            </svg>
+            <h2 class="card-title">Upload File Soal</h2>
+          }
+        </div>
+
+        <form (ngSubmit)="onSubmit()">
+
+          <!-- Grade -->
+          <div class="fg">
+            <label class="fl" for="grade">Grade <span class="req">*</span></label>
+            <select id="grade" class="fi" [(ngModel)]="form.grade" name="grade" (change)="onGradeChange()">
+              <option value="">Pilih Grade</option>
+              @for (g of grades; track g) {
+                <option [value]="g">{{ g }}</option>
+              }
+            </select>
+            @if (errors.grade) {
+              <span class="fe">{{ errors.grade }}</span>
+            }
+          </div>
+
+          <!-- Subject -->
+          <div class="fg">
+            <label class="fl" for="subject">Subject <span class="req">*</span></label>
+            <select
+              id="subject"
+              class="fi"
+              [(ngModel)]="form.subject"
+              name="subject"
+              [attr.disabled]="!form.grade ? '' : null"
+            >
+              <option value="">
+                @if (!form.grade) { Pilih grade terlebih dulu } @else { Pilih Subject }
+              </option>
+              @for (s of availableSubjects; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+            @if (errors.subject) {
+              <span class="fe">{{ errors.subject }}</span>
+            }
+          </div>
+
+          <!-- Topics -->
+          <div class="fg">
+            <label class="fl" for="topics">Topics <span class="req">*</span></label>
+            <input
+              id="topics"
+              type="text"
+              class="fi"
+              [(ngModel)]="form.topics"
+              name="topics"
+              placeholder="Contoh: Matematika Aljabar"
+            />
+            @if (errors.topics) {
+              <span class="fe">{{ errors.topics }}</span>
+            }
+          </div>
+
+          <!-- File Upload -->
+          <div class="fg">
+            <label class="fl">
+              File <span class="req">*</span>
+              @if (editingId) {
+                <span class="fl-opt">(opsional saat edit)</span>
+              }
+            </label>
+            <div
+              class="drop-zone"
+              [class.dz-over]="isDragOver"
+              [class.dz-filled]="!!selectedFile"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave()"
+              (drop)="onDrop($event)"
+              (click)="fileInput.click()"
+            >
+              @if (selectedFile) {
+                <div class="dz-file">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                    <polyline points="13 2 13 9 20 9" />
+                  </svg>
+                  <span class="dz-fname">{{ selectedFile.name }}</span>
+                  <button type="button" class="dz-remove" (click)="$event.stopPropagation(); clearFile()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              } @else {
+                <div class="dz-empty">
+                  <svg class="dz-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 16 12 12 8 16" />
+                    <line x1="12" y1="12" x2="12" y2="21" />
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                  </svg>
+                  <p class="dz-text">Drag & drop atau <span>klik untuk pilih file</span></p>
+                  <p class="dz-hint">PDF, Word (.doc/.docx), Excel (.xls/.xlsx)</p>
+                </div>
+              }
+            </div>
+            <input
+              #fileInput
+              type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
+              (change)="onFileSelect($event)"
+              style="display:none"
+            />
+            @if (errors.file) {
+              <span class="fe">{{ errors.file }}</span>
+            }
+          </div>
+
+          <!-- Title Preview -->
+          @if (form.grade && form.topics.trim()) {
+            <div class="preview-box">
+              <span class="preview-label">Preview Judul:</span>
+              <span class="preview-value">G-{{ gradeNumber }} {{ form.topics }}</span>
+            </div>
+          }
+
+          <!-- Actions -->
+          <div class="form-btns">
+            @if (editingId) {
+              <button type="button" class="btn-cancel" (click)="cancelEdit()">Batal</button>
+            }
+            <button
+              type="submit"
+              class="btn-submit"
+              [class.full]="!editingId"
+              [disabled]="!isFormValid"
+            >
+              {{ editingId ? 'Update' : 'Submit' }}
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </aside>
+
+  </div>
+</div>
