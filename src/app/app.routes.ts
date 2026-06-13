@@ -7,12 +7,12 @@ export const routes: Routes = [
   {
     path: 'manage-storage',
     loadComponent: () =>
-      import('./app/features/manage-storage/manage-storage').then(m => m.ManageStorage),
+      import('./features/manage-storage/manage-storage').then(m => m.ManageStorage),
   },
   {
     path: 'manage-user',
     loadComponent: () =>
-      import('./app/features/manage-user/manage-user').then(m => m.ManageUser),
+      import('./features/manage-user/manage-user').then(m => m.ManageUser),
   },
   { path: '**', redirectTo: 'dashboard' },
 ];
