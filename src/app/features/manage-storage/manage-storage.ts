@@ -21,8 +21,6 @@ interface FileItem {
   styleUrl: './manage-storage.css',
 })
 export class ManageStorage {
-  readonly username = 'Admin';
-
   // --- Navigation state ---
   years = ['Tahun Ajaran 2024 - 2025', 'Tahun Ajaran 2025 - 2026'];
   jenjang = ['SD', 'SMP', 'SMA'];

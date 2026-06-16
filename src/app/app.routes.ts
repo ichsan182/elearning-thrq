@@ -15,12 +15,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/manage-storage/manage-storage').then(m => m.ManageStorage),
     canActivate: [authGuard],
+    data: { role: 'Admin' },
   },
   {
     path: 'manage-user',
     loadComponent: () =>
       import('./features/manage-user/manage-user').then(m => m.ManageUser),
     canActivate: [authGuard],
+    data: { role: 'Admin' },
   },
   { path: '**', redirectTo: 'dashboard' },
 ];

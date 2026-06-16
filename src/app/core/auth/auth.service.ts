@@ -1,26 +1,30 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Role } from './roles';
 
-interface DbUser {
-  username: string;
+interface UserRecord {
+  id: number;
+  name: string;
+  email: string;
   password: string;
-  role: string;
-}
-
-interface Db {
-  users: DbUser[];
+  role: Role;
+  grade?: number;
 }
 
 export interface AuthSession {
-  username: string;
-  role: string;
+  name: string;
+  email: string;
+  role: Role;
+  grade?: number;
 }
 
 const AUTH_STORAGE_KEY = 'auth';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly apiUrl = `${environment.apiUrl}/users`;
   private readonly sessionSignal = signal<AuthSession | null>(this.readSession());
   readonly session = this.sessionSignal.asReadonly();
 
@@ -30,16 +34,16 @@ export class AuthService {
     return this.sessionSignal() !== null;
   }
 
-  hasRole(role: string): boolean {
-    const current = this.sessionSignal();
-    if (!current) return false;
-    return role.startsWith('Teacher') ? current.role.startsWith('Teacher') : current.role === role;
+  hasRole(role: Role): boolean {
+    return this.sessionSignal()?.role === role;
   }
 
-  login(username: string, password: string): Observable<AuthSession | null> {
-    return this.http.get<Db>('/db.json').pipe(
-      map(db => db.users.find(u => u.username === username && u.password === password)),
-      map(user => (user ? { username: user.username, role: user.role } : null)),
+  login(email: string, password: string): Observable<AuthSession | null> {
+    return this.http.get<UserRecord[]>(this.apiUrl, { params: { email, password } }).pipe(
+      map(users => users[0] ?? null),
+      map(user =>
+        user ? { name: user.name, email: user.email, role: user.role, grade: user.grade } : null,
+      ),
       map(session => {
         if (session) this.persistSession(session);
         return session;

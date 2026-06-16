@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 
@@ -9,9 +9,15 @@ import { AuthService } from '../../../core/auth/auth.service';
   styleUrl: './navbar.css',
 })
 export class Navbar {
-  @Input() username = 'Admin';
-
   constructor(private readonly auth: AuthService, private readonly router: Router) {}
+
+  get username(): string {
+    return this.auth.session()?.name ?? 'User';
+  }
+
+  get isAdmin(): boolean {
+    return this.auth.session()?.role === 'Admin';
+  }
 
   // Logout action: clear session and navigate to login
   logout(): void {

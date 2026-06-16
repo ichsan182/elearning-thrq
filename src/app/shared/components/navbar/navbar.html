@@ -10,8 +10,10 @@
       [routerLinkActiveOptions]="{ exact: true }"
       class="nav-link"
     >Dashboard</a>
-    <a routerLink="/manage-storage" routerLinkActive="active" class="nav-link">Manage Storage</a>
-    <a routerLink="/manage-user" routerLinkActive="active" class="nav-link">Manage User</a>
+    @if (isAdmin) {
+      <a routerLink="/manage-storage" routerLinkActive="active" class="nav-link">Manage Storage</a>
+      <a routerLink="/manage-user" routerLinkActive="active" class="nav-link">Manage User</a>
+    }
   </div>
 
   <div class="navbar-right">

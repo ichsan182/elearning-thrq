@@ -49,6 +49,10 @@
 .field input:focus, .field select:focus { box-shadow:0 6px 18px rgba(62,88,121,0.06); border-color:#3E5879; }
 .error { color:#B00020; font-size:0.8rem; margin-top:4px; }
 
+.field-row { display:flex; gap:12px; margin-bottom:12px; }
+.field-row .field { flex:1; margin-bottom:0; }
+.role-preview { font-size:0.85rem; color:#3E5879; background:#F5EFE7; border-radius:8px; padding:8px 12px; margin:12px 0; }
+
 .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:8px; }
 
 @media (max-width:720px) {

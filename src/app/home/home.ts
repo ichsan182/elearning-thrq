@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Navbar } from '../shared/components/navbar/navbar';
+import { AuthService } from '../core/auth/auth.service';
+import { gradesForRole } from '../core/auth/roles';
 
 interface FileRecord {
   id: string;
@@ -22,8 +24,6 @@ type GradeGroup = 'elementary' | 'middle' | 'high';
   styleUrl: './home.css',
 })
 export class Home {
-  readonly username = 'Admin';
-
   form = { grade: '', subject: '', topics: '' };
   selectedFile: File | null = null;
   editingId: string | null = null;
@@ -42,7 +42,11 @@ export class Home {
     high: ['Bahasa Indonesia', 'Math', 'Biology', 'Physics', 'Chemistry', 'IPS', 'PP (Pendidikan Pancasila)', 'Agama', 'Economic', 'Business'],
   };
 
-  readonly grades = Array.from({ length: 12 }, (_, i) => `Grade-${i + 1}`);
+  constructor(private readonly auth: AuthService) {}
+
+  get grades(): string[] {
+    return gradesForRole(this.auth.session()?.role ?? 'Admin').map(n => `Grade-${n}`);
+  }
 
   get gradeGroup(): GradeGroup | null {
     const n = parseInt(this.form.grade.replace('Grade-', ''));

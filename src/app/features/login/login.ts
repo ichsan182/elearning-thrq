@@ -37,8 +37,7 @@ export class Login {
         return;
       }
 
-      const redirectTo = session.role.startsWith('Teacher') ? '/manage-storage' : '/dashboard';
-      this.router.navigateByUrl(redirectTo);
+      this.router.navigateByUrl('/dashboard');
     });
   }
 }

@@ -1,0 +1,35 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin User",
+      "email": "admin_edu@example.com",
+      "password": "passwordAdmin123",
+      "role": "Admin"
+    },
+    {
+      "id": 2,
+      "name": "Teacher One",
+      "email": "teacher1@example.com",
+      "password": "secret",
+      "role": "teacher-sd",
+      "grade": 1
+    },
+    {
+      "id": 3,
+      "name": "Teacher Grade 7",
+      "email": "teacher_grade7@example.com",
+      "password": "passwordTeacher123",
+      "role": "teacher-smp",
+      "grade": 7
+    },
+    {
+      "id": 4,
+      "name": "ichsan ilyasa",
+      "email": "ichsanilyasa3@gmail.com",
+      "password": "nigguniggu",
+      "role": "teacher-sma",
+      "grade": 12
+    }
+  ]
+}

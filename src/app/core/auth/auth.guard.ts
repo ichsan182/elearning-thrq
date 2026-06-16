@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
+import { Role } from './roles';
 
 export const authGuard: CanActivateFn = route => {
   const auth = inject(AuthService);
@@ -10,7 +11,7 @@ export const authGuard: CanActivateFn = route => {
     return router.createUrlTree(['/login']);
   }
 
-  const requiredRole = route.data['role'] as string | undefined;
+  const requiredRole = route.data['role'] as Role | undefined;
   if (requiredRole && !auth.hasRole(requiredRole)) {
     return router.createUrlTree(['/dashboard']);
   }

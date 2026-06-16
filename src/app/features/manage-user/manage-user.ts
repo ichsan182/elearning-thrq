@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Navbar } from '../../shared/components/navbar/navbar';
+import { environment } from '../../../environments/environment';
+import { Role, ROLE_LABELS, TEACHER_ROLES, roleForGrade } from '../../core/auth/roles';
 
-type Role = 'Admin' | string;
+type AccountType = 'Admin' | 'Teacher';
 
 interface User {
   id: number;
@@ -11,6 +14,15 @@ interface User {
   email: string;
   password: string;
   role: Role;
+  grade?: number;
+}
+
+interface UserFormModel {
+  name: string;
+  email: string;
+  password: string;
+  accountType: AccountType | '';
+  grade: number | null;
 }
 
 @Component({
@@ -19,22 +31,19 @@ interface User {
   templateUrl: './manage-user.html',
   styleUrl: './manage-user.css',
 })
-export class ManageUser {
-  readonly username = 'Admin';
+export class ManageUser implements OnInit {
+  private readonly apiUrl = `${environment.apiUrl}/users`;
 
-  // In-memory users list. Replace with API calls later.
-  users: User[] = [
-    { id: 1, name: 'Admin User', email: 'admin@example.com', password: 'secret', role: 'Admin' },
-    { id: 2, name: 'Teacher One', email: 'teacher1@example.com', password: 'secret', role: 'Teacher Grade 1' },
-  ];
+  readonly roleLabels = ROLE_LABELS;
+  readonly teacherRoles = TEACHER_ROLES;
+  readonly allGrades = Array.from({ length: 12 }, (_, i) => i + 1);
 
-  // Roles: Admin + Teacher Grade 1..12
-  teacherRoles = Array.from({ length: 12 }, (_, i) => `Teacher Grade ${i + 1}`);
+  users: User[] = [];
 
   // Modal & form state
   showModal = false;
   isEdit = false;
-  editIndex: number | null = null;
+  editingId: number | null = null;
 
   // UI state for dashboard enhancements
   searchTerm = '';
@@ -42,68 +51,47 @@ export class ManageUser {
   cardView = false;
 
   // Model bound to the form in the modal
-  formModel: Partial<User> = this.emptyModel();
+  formModel: UserFormModel = this.emptyModel();
+
+  constructor(private readonly http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.http.get<User[]>(this.apiUrl).subscribe(users => (this.users = users));
+  }
 
   // Utility to create an empty model
-  emptyModel(): Partial<User> {
-    return { name: '', email: '', password: '', role: '' };
+  emptyModel(): UserFormModel {
+    return { name: '', email: '', password: '', accountType: '', grade: null };
   }
 
-  // CRUD: Read users (returns a copy)
-  readUsers(): User[] {
-    return [...this.users];
-  }
-
-  // CRUD: Add a new user
-  addUser(payload: Partial<User>): void {
-    // Basic validation: ensure required fields exist (form already validates)
-    const id = this.users.length ? Math.max(...this.users.map(u => u.id)) + 1 : 1;
-    const newUser: User = {
-      id,
-      name: String(payload.name).trim(),
-      email: String(payload.email).trim(),
-      password: String(payload.password),
-      role: String(payload.role) as Role,
-    };
-    this.users = [...this.users, newUser];
-  }
-
-  // CRUD: Update an existing user by index
-  updateUser(index: number, payload: Partial<User>): void {
-    const existing = this.users[index];
-    if (!existing) return;
-    const updated: User = {
-      ...existing,
-      name: String(payload.name).trim(),
-      email: String(payload.email).trim(),
-      password: String(payload.password),
-      role: String(payload.role) as Role,
-    };
-    const copy = [...this.users];
-    copy[index] = updated;
-    this.users = copy;
-  }
-
-  // CRUD: Delete a user by index
-  deleteUser(index: number): void {
-    this.users = this.users.filter((_, i) => i !== index);
+  // Role derived automatically from the chosen grade (grade 1-6 -> SD, 7-9 -> SMP, 10-12 -> SMA)
+  get derivedRole(): Role | null {
+    if (this.formModel.accountType === 'Admin') return 'Admin';
+    if (this.formModel.accountType === 'Teacher' && this.formModel.grade) {
+      return roleForGrade(this.formModel.grade);
+    }
+    return null;
   }
 
   // Open modal in Add mode
   openAddModal(): void {
     this.isEdit = false;
-    this.editIndex = null;
+    this.editingId = null;
     this.formModel = this.emptyModel();
     this.showModal = true;
   }
 
   // Open modal in Edit mode, prefill formModel
-  openEditModal(index: number): void {
-    const u = this.users[index];
-    if (!u) return;
+  openEditModal(user: User): void {
     this.isEdit = true;
-    this.editIndex = index;
-    this.formModel = { ...u };
+    this.editingId = user.id;
+    this.formModel = {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      accountType: user.role === 'Admin' ? 'Admin' : 'Teacher',
+      grade: user.grade ?? null,
+    };
     this.showModal = true;
   }
 
@@ -111,31 +99,43 @@ export class ManageUser {
   closeModal(): void {
     this.showModal = false;
     this.isEdit = false;
-    this.editIndex = null;
+    this.editingId = null;
     this.formModel = this.emptyModel();
   }
 
-  // Called when the modal form is submitted
+  // Called when the modal form is submitted; persists via json-server
   onSubmit(form: NgForm): void {
-    if (form.invalid) return; // form-level guard
+    if (form.invalid || !this.derivedRole) return;
 
-    if (this.isEdit && this.editIndex !== null) {
-      // Update existing user
-      this.updateUser(this.editIndex, this.formModel);
+    const payload: Omit<User, 'id'> = {
+      name: this.formModel.name.trim(),
+      email: this.formModel.email.trim(),
+      password: this.formModel.password,
+      role: this.derivedRole,
+      ...(this.formModel.accountType === 'Teacher' ? { grade: this.formModel.grade! } : {}),
+    };
+
+    if (this.isEdit && this.editingId !== null) {
+      this.http.put<User>(`${this.apiUrl}/${this.editingId}`, payload).subscribe(updated => {
+        this.users = this.users.map(u => (u.id === updated.id ? updated : u));
+        this.closeModal();
+      });
     } else {
-      // Add new user
-      this.addUser(this.formModel);
+      this.http.post<User>(this.apiUrl, payload).subscribe(created => {
+        this.users = [...this.users, created];
+        this.closeModal();
+      });
     }
-
-    this.closeModal();
   }
 
-  // Confirm before deleting
-  confirmDelete(index: number): void {
-    const u = this.users[index];
-    if (!u) return;
-    const confirmed = window.confirm(`Hapus user "${u.name}"? Tindakan ini tidak dapat dibatalkan.`);
-    if (confirmed) this.deleteUser(index);
+  // Confirm before deleting, then remove from json-server
+  confirmDelete(user: User): void {
+    const confirmed = window.confirm(`Hapus user "${user.name}"? Tindakan ini tidak dapat dibatalkan.`);
+    if (!confirmed) return;
+
+    this.http.delete(`${this.apiUrl}/${user.id}`).subscribe(() => {
+      this.users = this.users.filter(u => u.id !== user.id);
+    });
   }
 
   // Computed: filtered users based on search and role
@@ -151,7 +151,11 @@ export class ManageUser {
   // Summary stats for dashboard cards
   get totalUsers(): number { return this.users.length; }
   get totalAdmins(): number { return this.users.filter(u => u.role === 'Admin').length; }
-  get totalTeachers(): number { return this.users.filter(u => u.role.startsWith('Teacher')).length; }
+  get totalTeachers(): number { return this.users.filter(u => u.role !== 'Admin').length; }
+
+  roleLabel(role: Role): string {
+    return this.roleLabels[role];
+  }
 
   // Small helper to return initials for avatar
   initials(name?: string): string {
