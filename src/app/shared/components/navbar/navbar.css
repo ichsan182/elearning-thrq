@@ -75,8 +75,14 @@
   align-items: center;
 }
 
-.navbar-logo {
-  height: 38px;
-  width: auto;
-  object-fit: contain;
+.logout-box {
+  background: #FFFFFF;
+  color: #213555;
+  border: 1px solid rgba(33,53,85,0.06);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(33,53,85,0.06);
 }
+.logout-box:hover { background: #F5EFE7; }

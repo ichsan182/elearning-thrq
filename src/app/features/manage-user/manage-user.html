@@ -1,14 +1,127 @@
 <div class="page">
-  <app-navbar [username]="username" />
-  <div class="placeholder">
-    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-    <h2>Manage User</h2>
-    <p>Halaman ini sedang dalam pengembangan.</p>
+  <app-navbar [username]="username"></app-navbar>
+
+  <main class="container">
+    <header class="page-header">
+      <h1>Manage Users</h1>
+      <div class="header-actions">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-value">{{ totalUsers }}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ totalAdmins }}</div>
+            <div class="stat-label">Admins</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ totalTeachers }}</div>
+            <div class="stat-label">Teachers</div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <input class="search" placeholder="Search by name or email" [(ngModel)]="searchTerm" />
+          <select class="filter" [(ngModel)]="selectedRole">
+            <option value="">All Roles</option>
+            <option value="Admin">Admin</option>
+            <option *ngFor="let r of teacherRoles" [value]="r">{{ r }}</option>
+          </select>
+          <button class="btn btn-ghost" (click)="cardView = !cardView">{{ cardView ? 'Table View' : 'Card View' }}</button>
+          <button class="btn btn-primary" (click)="openAddModal()">Add New User</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="card">
+      <!-- Card Grid View -->
+      <div class="cards-grid" *ngIf="cardView">
+        <div class="user-card" *ngFor="let u of filteredUsers; let i = index">
+          <div class="avatar">{{ initials(u.name) }}</div>
+          <div class="user-info">
+            <div class="name">{{ u.name }}</div>
+            <div class="email">{{ u.email }}</div>
+            <div class="role">{{ u.role }}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-ghost" (click)="openEditModal(i)">Edit</button>
+            <button class="btn btn-danger" (click)="confirmDelete(i)">Delete</button>
+          </div>
+        </div>
+        <div class="empty" *ngIf="filteredUsers.length === 0">No users match your filters.</div>
+      </div>
+
+      <!-- Table View -->
+      <div class="table-wrap" *ngIf="!cardView">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama User</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of filteredUsers; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ u.name }}</td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.role }}</td>
+              <td class="actions">
+                <button class="btn btn-ghost" (click)="openEditModal(i)">Edit</button>
+                <button class="btn btn-danger" (click)="confirmDelete(i)">Delete</button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredUsers.length === 0">
+              <td colspan="5" class="empty">No users found. Add a user to begin.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" *ngIf="showModal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2>{{ isEdit ? 'Edit User' : 'Add New User' }}</h2>
+
+      <form #userFormRef="ngForm" (ngSubmit)="onSubmit(userFormRef)">
+        <label class="field">
+          <span>Nama Lengkap</span>
+          <input name="name" type="text" required minlength="2" [(ngModel)]="formModel.name" #nameCtrl="ngModel" />
+          <small class="error" *ngIf="nameCtrl.invalid && nameCtrl.touched">Nama wajib diisi (min 2 karakter).</small>
+        </label>
+
+        <label class="field">
+          <span>Email</span>
+          <input name="email" type="email" required [(ngModel)]="formModel.email" #emailCtrl="ngModel" />
+          <small class="error" *ngIf="emailCtrl.invalid && emailCtrl.touched">Email tidak valid.</small>
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <input name="password" type="password" required minlength="6" [(ngModel)]="formModel.password" #pwCtrl="ngModel" />
+          <small class="error" *ngIf="pwCtrl.invalid && pwCtrl.touched">Password wajib (min 6 karakter).</small>
+        </label>
+
+        <label class="field">
+          <span>Role</span>
+          <select name="role" required [(ngModel)]="formModel.role" #roleCtrl="ngModel">
+            <option value="">-- Pilih Role --</option>
+            <option value="Admin">Admin</option>
+            <option *ngFor="let r of teacherRoles" [value]="r">{{ r }}</option>
+          </select>
+          <small class="error" *ngIf="roleCtrl.invalid && roleCtrl.touched">Pilih role.</small>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="userFormRef.invalid">Save</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
