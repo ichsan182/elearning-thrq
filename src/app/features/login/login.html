@@ -1,42 +1,41 @@
-<!doctype html>
-<html lang="id">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login - eLearning</title>
-  <link rel="stylesheet" href="./css/login.css" />
-  <script defer src="./js/auth.js"></script>
-  <style>
-    /* small page-specific override to ensure full-height */
-    html,body{height:100%;margin:0}
-  </style>
-</head>
-<body>
-  <div class="page">
-    <main class="login-wrap">
-      <div class="card">
-        <h1 class="brand">eLearning</h1>
-        <p class="subtitle">Sign in to your account</p>
+<div class="page">
+  <main class="login-wrap">
+    <div class="card">
+      <h1 class="brand">eLearning</h1>
+      <p class="subtitle">Sign in to your account</p>
 
-        <form id="loginForm" onsubmit="handleLoginForm(event)">
-          <label class="field">
-            <input id="username" name="username" type="text" placeholder="Username or Email" autocomplete="username" />
-          </label>
+      <form (ngSubmit)="onSubmit()">
+        <label class="field">
+          <input
+            name="username"
+            type="text"
+            placeholder="Username or Email"
+            autocomplete="username"
+            [(ngModel)]="username"
+          />
+        </label>
 
-          <label class="field">
-            <input id="password" name="password" type="password" placeholder="Password" autocomplete="current-password" />
-          </label>
+        <label class="field">
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            [(ngModel)]="password"
+          />
+        </label>
 
-          <div class="actions">
-            <button type="submit" class="btn btn-primary">Login</button>
-          </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">Login</button>
+        </div>
 
-          <div id="errorMsg" class="error" aria-live="polite"></div>
-        </form>
+        <div class="error" aria-live="polite">{{ errorMessage }}</div>
+      </form>
 
-        <div class="help">Use <strong>admin_edu</strong> or <strong>teacher_grade7</strong> for testing.</div>
+      <div class="help">
+        Use <strong>admin_edu</strong> or <strong>teacher_grade7</strong> for
+        testing.
       </div>
-    </main>
-  </div>
-</body>
-</html>
+    </div>
+  </main>
+</div>

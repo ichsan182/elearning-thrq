@@ -1,0 +1,6 @@
+{
+  "users": [
+    { "username": "admin_edu", "password": "passwordAdmin123", "role": "Admin" },
+    { "username": "teacher_grade7", "password": "passwordTeacher123", "role": "Teacher Grade 7" }
+  ]
+}
